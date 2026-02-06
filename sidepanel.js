@@ -160,13 +160,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             if (tabs.length === 0) {
                 console.warn("No active tab found.");
-                addSystemMessage("Debug: No active tab found.");
+                // addSystemMessage("Debug: No active tab found.");
             } else {
                 const tab = tabs[0];
                 // Check if we can access the URL (requires permissions)
                 if (tab.url && tab.url.startsWith('chrome://')) {
                     console.warn("Cannot read chrome:// pages.");
-                    addSystemMessage("Debug: Cannot read text from chrome:// pages.");
+                    // addSystemMessage("Debug: Cannot read text from chrome:// pages.");
                 } else if (tab.id) {
                     try {
                         const result = await chrome.scripting.executeScript({
@@ -174,19 +174,19 @@ document.addEventListener('DOMContentLoaded', async () => {
                             func: () => document.body.innerText
                         });
                         if (result && result[0] && result[0].result) {
-                            pageContext = result[0].result.slice(0, 5000); // Limit context size
-                            addSystemMessage(`Debug: Read page content (${pageContext.length} chars)`);
+                            pageContext = result[0].result; // Removed limit
+                            // addSystemMessage(`Debug: Read page content (${pageContext.length} chars)`);
                         } else {
-                            addSystemMessage("Debug: Could not extract text (empty result).");
+                            // addSystemMessage("Debug: Could not extract text (empty result).");
                         }
                     } catch (scriptErr) {
-                        addSystemMessage(`Debug: Script injection failed: ${scriptErr.message}`);
+                        console.debug(`Debug: Script injection failed: ${scriptErr.message}`);
                     }
                 }
             }
         } catch (err) {
             console.error("Could not read page context:", err);
-            addSystemMessage(`Debug: Error reading page: ${err.message || err}`);
+            // addSystemMessage(`Debug: Error reading page: ${err.message || err}`);
         }
 
         const finalPrompt = pageContext

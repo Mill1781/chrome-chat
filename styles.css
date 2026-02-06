@@ -326,7 +326,7 @@ code {
   border: 1px solid #E5E7EB;
   border-radius: 10px;
   color: var(--text-primary);
-  margin-bottom: 20px;
+  margin-bottom: 16px;
   font-family: inherit;
   font-size: 14px;
   transition: all 0.2s;
@@ -375,12 +375,13 @@ code {
 
 #clear-history-btn {
   background-color: #FEE2E2;
-  color: #EF4444;
+  color: #000000;
   border: 1px solid #FECACA;
   width: 100%;
   border-radius: 10px;
   font-weight: 600;
-  margin-top: 10px;
+  margin-bottom: 16px;
+  margin-top: 0;
 }
 
 #clear-history-btn:hover {
