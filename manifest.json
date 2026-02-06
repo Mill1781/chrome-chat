@@ -1,0 +1,24 @@
+{
+    "manifest_version": 3,
+    "name": "Gemini Side Panel Chat",
+    "version": "1.0",
+    "description": "Chat with Gemini in the side panel",
+    "side_panel": {
+        "default_path": "sidepanel.html"
+    },
+    "permissions": [
+        "sidePanel",
+        "storage",
+        "scripting",
+        "activeTab"
+    ],
+    "host_permissions": [
+        "<all_urls>"
+    ],
+    "background": {
+        "service_worker": "service_worker.js"
+    },
+    "action": {
+        "default_title": "Open Gemini Chat"
+    }
+}
