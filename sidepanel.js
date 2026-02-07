@@ -2,6 +2,7 @@
 const SYSTEM_PROMPT = "You are a helpful AI assistant. You are chatting with a user in a browser side panel.";
 const DEFAULT_API_KEY = "AIzaSyDlPy3KelR9LeiTejp4NN0HHkpRwmeTq9U";
 const DEFAULT_MODEL = "gemini-2.5-flash";
+const DEFAULT_READ_PAGE_CONTEXT = true;
 
 // Chat History State
 let chatHistory = [];
@@ -21,6 +22,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const saveKeyBtn = document.getElementById('save-key-btn');
     const apiKeyInput = document.getElementById('api-key-input');
     const modelSelect = document.getElementById('model-select');
+    const pageContextToggle = document.getElementById('page-context-toggle');
 
     // Load Chat History
     try {
@@ -67,6 +69,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
+    // Toggle Button Logic
+    pageContextToggle.addEventListener('click', () => {
+        const isChecked = pageContextToggle.getAttribute('aria-checked') === 'true';
+        pageContextToggle.setAttribute('aria-checked', !isChecked);
+    });
+
     closeSettingsBtn.addEventListener('click', () => {
         settingsModal.classList.add('hidden');
     });
@@ -74,15 +82,17 @@ document.addEventListener('DOMContentLoaded', async () => {
     saveKeyBtn.addEventListener('click', async () => {
         const key = apiKeyInput.value.trim();
         const model = modelSelect.value;
+        const readPageContext = pageContextToggle.getAttribute('aria-checked') === 'true';
 
         if (key) {
             try {
                 await chrome.storage.local.set({
                     geminiApiKey: key,
-                    geminiModel: model
+                    geminiModel: model,
+                    geminiReadPageContext: readPageContext
                 });
                 settingsModal.classList.add('hidden');
-                addSystemMessage(`Settings saved. Using model: ${model}`);
+                addSystemMessage(`Settings saved. Model: ${model}, Read Page: ${readPageContext ? 'On' : 'Off'}`);
             } catch (e) {
                 console.error("Save failed:", e);
                 alert("Failed to save settings. See console.");
@@ -93,7 +103,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Load Settings
     async function loadSettings() {
         try {
-            const result = await chrome.storage.local.get(['geminiApiKey', 'geminiModel']);
+            const result = await chrome.storage.local.get(['geminiApiKey', 'geminiModel', 'geminiReadPageContext']);
 
             if (result.geminiApiKey) {
                 apiKeyInput.value = result.geminiApiKey;
@@ -106,6 +116,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             } else {
                 modelSelect.value = DEFAULT_MODEL;
             }
+
+            // Set toggle state (default to true if undefined)
+            const readPage = result.geminiReadPageContext !== undefined ? result.geminiReadPageContext : DEFAULT_READ_PAGE_CONTEXT;
+            pageContextToggle.setAttribute('aria-checked', readPage);
+
         } catch (e) {
             console.error("Load failed:", e);
         }
@@ -129,11 +144,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         let apiKey = DEFAULT_API_KEY;
         let model = DEFAULT_MODEL;
+        let readPageContext = DEFAULT_READ_PAGE_CONTEXT;
 
         try {
-            const result = await chrome.storage.local.get(['geminiApiKey', 'geminiModel']);
+            const result = await chrome.storage.local.get(['geminiApiKey', 'geminiModel', 'geminiReadPageContext']);
             if (result.geminiApiKey) apiKey = result.geminiApiKey;
             if (result.geminiModel) model = result.geminiModel;
+            if (result.geminiReadPageContext !== undefined) readPageContext = result.geminiReadPageContext;
         } catch (e) {
             console.error("Failed to get settings:", e);
         }
@@ -152,41 +169,44 @@ document.addEventListener('DOMContentLoaded', async () => {
         const aiMessageDiv = addMessage("Thinking...", 'ai');
 
         // Fetch page content
-        // Fetch page content
         let pageContext = "";
-        try {
-            // Try lastFocusedWindow first to handle side panel focus issues
-            const tabs = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
 
-            if (tabs.length === 0) {
-                console.warn("No active tab found.");
-                // addSystemMessage("Debug: No active tab found.");
-            } else {
-                const tab = tabs[0];
-                // Check if we can access the URL (requires permissions)
-                if (tab.url && tab.url.startsWith('chrome://')) {
-                    console.warn("Cannot read chrome:// pages.");
-                    // addSystemMessage("Debug: Cannot read text from chrome:// pages.");
-                } else if (tab.id) {
-                    try {
-                        const result = await chrome.scripting.executeScript({
-                            target: { tabId: tab.id },
-                            func: () => document.body.innerText
-                        });
-                        if (result && result[0] && result[0].result) {
-                            pageContext = result[0].result; // Removed limit
-                            // addSystemMessage(`Debug: Read page content (${pageContext.length} chars)`);
-                        } else {
-                            // addSystemMessage("Debug: Could not extract text (empty result).");
+        // Only fetch if enabled
+        if (readPageContext) {
+            try {
+                // Try lastFocusedWindow first to handle side panel focus issues
+                const tabs = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
+
+                if (tabs.length === 0) {
+                    console.warn("No active tab found.");
+                    // addSystemMessage("Debug: No active tab found.");
+                } else {
+                    const tab = tabs[0];
+                    // Check if we can access the URL (requires permissions)
+                    if (tab.url && tab.url.startsWith('chrome://')) {
+                        console.warn("Cannot read chrome:// pages.");
+                        // addSystemMessage("Debug: Cannot read text from chrome:// pages.");
+                    } else if (tab.id) {
+                        try {
+                            const result = await chrome.scripting.executeScript({
+                                target: { tabId: tab.id },
+                                func: () => document.body.innerText
+                            });
+                            if (result && result[0] && result[0].result) {
+                                pageContext = result[0].result; // Removed limit
+                                // addSystemMessage(`Debug: Read page content (${pageContext.length} chars)`);
+                            } else {
+                                // addSystemMessage("Debug: Could not extract text (empty result).");
+                            }
+                        } catch (scriptErr) {
+                            console.debug(`Debug: Script injection failed: ${scriptErr.message}`);
                         }
-                    } catch (scriptErr) {
-                        console.debug(`Debug: Script injection failed: ${scriptErr.message}`);
                     }
                 }
+            } catch (err) {
+                console.error("Could not read page context:", err);
+                // addSystemMessage(`Debug: Error reading page: ${err.message || err}`);
             }
-        } catch (err) {
-            console.error("Could not read page context:", err);
-            // addSystemMessage(`Debug: Error reading page: ${err.message || err}`);
         }
 
         const finalPrompt = pageContext
