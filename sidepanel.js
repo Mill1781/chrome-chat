@@ -231,17 +231,23 @@ document.addEventListener('DOMContentLoaded', async () => {
             const reader = response.body.getReader();
             const decoder = new TextDecoder();
             let accumulatedText = "";
+            let buffer = "";
 
             while (true) {
                 const { value, done } = await reader.read();
                 if (done) break;
 
                 const chunk = decoder.decode(value, { stream: true });
-                const lines = chunk.split('\n');
+                buffer += chunk;
+                const lines = buffer.split('\n');
+                buffer = lines.pop() || ""; // Keep the last incomplete line (or empty string if ends with newline)
 
                 for (const line of lines) {
-                    if (line.startsWith('data: ')) {
-                        const jsonStr = line.slice(6);
+                    const trimmedLine = line.trim();
+                    if (!trimmedLine) continue;
+
+                    if (trimmedLine.startsWith('data: ')) {
+                        const jsonStr = trimmedLine.slice(6);
                         if (jsonStr === '[DONE]') continue;
 
                         try {
@@ -252,17 +258,17 @@ document.addEventListener('DOMContentLoaded', async () => {
                                 accumulatedText += candidate.content.parts[0].text;
                                 updateAiMessage(aiMessageDiv, accumulatedText);
                             }
-                            // Handle Image Response in stream (rare/different structure but usually one chunk)
+                            // Handle Image Response in stream
                             else if (candidate?.content?.parts?.[0]?.inlineData) {
                                 const part = candidate.content.parts[0];
                                 const mimeType = part.inlineData.mimeType || 'image/png';
                                 const imageData = part.inlineData.data;
                                 const imageMarkdown = `![Generated Image](data:${mimeType};base64,${imageData})`;
-                                accumulatedText += imageMarkdown; // Usually replaces entirely or appends
+                                accumulatedText += imageMarkdown;
                                 updateAiMessage(aiMessageDiv, accumulatedText);
                             }
                         } catch (e) {
-                            console.error("Error parsing stream chunk", e);
+                            console.error("Error parsing stream chunk", e, "Line:", trimmedLine);
                         }
                     }
                 }

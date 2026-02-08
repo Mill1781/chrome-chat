@@ -1,0 +1,146 @@
+/* Scoped styles for the Gemini Translation feature */
+#gemini-translation-btn {
+    position: absolute;
+    z-index: 2147483646;
+    /* High z-index */
+    width: 32px;
+    height: 32px;
+    background-color: #047857;
+    /* Dark Green from styles.css */
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid white;
+    transition: transform 0.2s ease, opacity 0.2s ease;
+    opacity: 0;
+    pointer-events: none;
+}
+
+#gemini-translation-btn.visible {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+#gemini-translation-btn:hover {
+    transform: scale(1.1);
+}
+
+#gemini-translation-btn svg {
+    width: 16px;
+    height: 16px;
+    fill: white;
+}
+
+/* Popover Styles */
+#gemini-translation-popover {
+    position: absolute;
+    z-index: 2147483647;
+    /* Max z-index */
+    background-color: #FFFFFF;
+    border-radius: 16px;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    width: 300px;
+    max-width: 90vw;
+    max-height: 400px;
+    overflow-y: auto;
+    border: 1px solid #E5E7EB;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    font-size: 14px;
+    color: #1F2937;
+    display: flex;
+    flex-direction: column;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(10px);
+    transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s;
+}
+
+#gemini-translation-popover.visible {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.gemini-popover-header {
+    padding: 12px 16px;
+    background-color: #F9FAFB;
+    border-bottom: 1px solid #E5E7EB;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top-left-radius: 16px;
+    border-top-right-radius: 16px;
+}
+
+.gemini-popover-title {
+    font-weight: 600;
+    color: #047857;
+    /* Brand color */
+    font-size: 14px;
+    margin: 0;
+}
+
+.gemini-popover-close {
+    cursor: pointer;
+    color: #6B7280;
+    background: none;
+    border: none;
+    padding: 4px;
+}
+
+.gemini-popover-close:hover {
+    color: #111827;
+}
+
+.gemini-popover-content {
+    padding: 16px;
+    line-height: 1.5;
+}
+
+.gemini-popover-content p {
+    margin: 0 0 8px 0;
+}
+
+.gemini-popover-content p:last-child {
+    margin-bottom: 0;
+}
+
+/* Loader */
+.gemini-loader {
+    display: flex;
+    justify-content: center;
+    padding: 20px;
+}
+
+.gemini-spinner {
+    width: 20px;
+    height: 20px;
+    border: 2px solid #E5E7EB;
+    border-top-color: #047857;
+    border-radius: 50%;
+    animation: gemini-spin 0.8s linear infinite;
+}
+
+@keyframes gemini-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Markdown Styles inside Popover */
+.gemini-popover-content strong {
+    font-weight: 600;
+    color: #111827;
+}
+
+.gemini-popover-content ul {
+    padding-left: 20px;
+    margin: 8px 0;
+}
+
+.gemini-popover-content li {
+    margin-bottom: 4px;
+}
